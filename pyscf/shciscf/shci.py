@@ -217,7 +217,7 @@ class SHCI(pyscf.lib.StreamObject):
         if verbose is None:
             verbose = self.verbose
         log = logger.Logger(self.stdout, verbose)
-        log.info( '********////////////// SHCI flags ********' )
+        log.info( '******** SHCI (Arrow) flags ********' )
         log.info( 'executable = %s', self.executable)
         log.info( 'mpiprefix = %s', self.mpiprefix )
         log.info( 'integralFile = %s', os.path.join(self.runtimeDir, self.integralFile) )
@@ -457,12 +457,8 @@ def writeSHCIConfFile( SHCI, nelec, Restart ):
     
     input_vars['get_2rdm_csv'] = True
     
-    print('$$$$SHCI.point group',SHCI.groupname) # TODO:delete
-    #print('$$$$SHCI.mo_coeff', SHCI.mo_coeff)
-    print('$$$$SHCI.orbsym',SHCI.orbsym)
-    print('$$$$SHCI.mo_occ',SHCI.mo_occ)
-    print('$$$$SHCI.useExtraSymm', SHCI.useExtraSymm)
-    
+
+    # Note: For Arrow, infinite groups are used only when useExtraSymm is true
     if SHCI.groupname == 'Coov' and not SHCI.useExtraSymm:
         input_vars['chem'] = {'point_group': 'C2v'}
     elif SHCI.groupname == 'Dooh' and  not SHCI.useExtraSymm:
@@ -472,8 +468,6 @@ def writeSHCIConfFile( SHCI, nelec, Restart ):
     
     if SHCI.TimeSymm:
         input_vars['time_sym'] = True
-
-#    input_vars['chem'] = {'point_group': SHCI.groupname}
 
     if SHCI.groupname !='Coov' and SHCI.groupname != 'Dooh': 
         occ_up = []
