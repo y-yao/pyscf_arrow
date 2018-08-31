@@ -1,0 +1,11 @@
+prefix=/home/cyrus/qmc_setup/QimingSun/pyscf/pyscf/lib/deps
+exec_prefix=${prefix}
+libdir=/home/cyrus/qmc_setup/QimingSun/pyscf/pyscf/lib/deps/lib
+includedir=${prefix}/include
+
+Name: libxc
+Description: Library of exchange and correlation functionals to be used in DFT codes
+Requires: 
+Version: 3.0.0
+Libs: -L${libdir} -lxc
+Cflags: -I${includedir}

@@ -1,0 +1,1 @@
+/usr/bin/cc  -fPIC -Wall  -O2 -g -DNDEBUG -fopenmp -Wl,--no-as-needed -shared -Wl,-soname,libxc_itrf.so -o ../../libxc_itrf.so CMakeFiles/xc_itrf.dir/libxc_itrf.c.o  -L/home/yuanyao/pyscf_my/pyscf/lib/deps/lib  -L/home/yuanyao/pyscf_my/pyscf/lib/deps/lib64  -L/usr/local/lib  -L/usr/local/lib64 -lxc -Wl,-rpath,"\$ORIGIN:\$ORIGIN/deps/lib" 

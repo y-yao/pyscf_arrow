@@ -1,0 +1,10 @@
+# Hashes of file build rules.
+ee2710b997a00ed42da12641b4ec5eb7 CMakeFiles/libxcfun
+509db04abbfd35dd769f1e1035bc4adf CMakeFiles/libxcfun-complete
+12bbc87eb9d8ad517d7ff0ea46379b3c deps/src/libxcfun-stamp/libxcfun-build
+ea75174bcfb796d948dbf5cc99d5acfa deps/src/libxcfun-stamp/libxcfun-configure
+bb117a3f93e42d5962266bd5adb58fe6 deps/src/libxcfun-stamp/libxcfun-download
+391de379ae7794d91210cab11619a507 deps/src/libxcfun-stamp/libxcfun-install
+af041ea5810f48d7a2c32f7e8aaa556a deps/src/libxcfun-stamp/libxcfun-mkdir
+92851ef4597320cff24a5976f2c743bf deps/src/libxcfun-stamp/libxcfun-patch
+a92636f4fea97b6edd6fdb311743366b deps/src/libxcfun-stamp/libxcfun-update

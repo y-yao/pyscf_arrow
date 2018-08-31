@@ -1,0 +1,15 @@
+To get and compile a new version, do the following:
+
+git clone https://github.com/sunqm/pyscf.git
+cd pyscf/pyscf/lib/
+mkdir build
+cd build/
+cmake ..
+make
+git checkout dev
+cmake ..
+make
+cp /qmc_setup/QimingSun/pyscf.old4/pyscf/fciqmcscf settings.py ~/qmc_setup/QimingSun/pyscf/pyscf/fciqmcscf
+cp /home/cyrus/qmc_setup/QimingSun/pyscf_old4/pyscf/future/shciscf/settings.py /home/cyrus/qmc_setup/QimingSun/pyscf/pyscf/future/shciscf/settings.py
+touch /home/cyrus/qmc_setup/QimingSun/pyscf/pyscf/dmrgscf/settings.py
+cp /home/cyrus/qmc_setup/QimingSun/pyscf_old4/pyscf/dmrgscf/settings.py /home/cyrus/qmc_setup/QimingSun/pyscf/pyscf/dmrgscf/settings.py
