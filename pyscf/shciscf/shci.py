@@ -252,8 +252,6 @@ class SHCI(pyscf.lib.StreamObject):
         twopdm = numpy.zeros((norb,norb,norb,norb))
         twopdm[i,j,k,l] = twopdm[j,i,l,k] = val
         
-	print('finished reading r2RDM')
-
         if (self.groupname == 'Dooh' or self.groupname == 'Coov') and self.useExtraSymm:
             # to use transformRDMDinfh routine, switch to Dice convention first
             twopdm = numpy.transpose(twopdm, (0,2,1,3))
@@ -262,13 +260,6 @@ class SHCI(pyscf.lib.StreamObject):
             twopdmcopy = 1.*twopdm
             twopdm = 0.*twopdm
 
-            print('twopdmcopy')
-            print(numpy.ascontiguousarray(twopdmcopy, numpy.float64))
-            print('twopdm')
-            print(numpy.ascontiguousarray(twopdm, numpy.float64))
-
-            print('calling transformRDMDinfh ')
-
             twopdmcopy = numpy.ascontiguousarray(twopdmcopy, numpy.float64)
             twopdm = numpy.ascontiguousarray(twopdm, numpy.float64)
             transformRDMDinfh(norb, numpy.ascontiguousarray(nRows, numpy.int32),
@@ -276,9 +267,7 @@ class SHCI(pyscf.lib.StreamObject):
                               numpy.ascontiguousarray(rowCoeffs, numpy.float64),
                               twopdmcopy,
                               twopdm)
-            print('twopdm after c routien', twopdm)
             twopdmcopy = None
-
 
             # Now convert 2rdm indices to pyscf convention
             twopdm = twopdm.transpose(0,3,2,1)
@@ -288,7 +277,6 @@ class SHCI(pyscf.lib.StreamObject):
 
         onepdm = numpy.einsum('ikjj->ki', twopdm)
         onepdm /= (nelectrons-1)
-	print('finished creating 1RDM from 2RDM')
         return onepdm, twopdm
 
     def trans_rdm1(self, statebra, stateket, norb, nelec, link_index=None, **kwargs):
@@ -458,7 +446,6 @@ def make_sched( SHCI ):
 
 
 def writeSHCIConfFile( SHCI, nelec, Restart ):
-    print('writeSHCIConfFile')
     input_vars = {'system':'chem'}
     input_vars['n_up'] = nelec[0]
     input_vars['n_dn'] = nelec[1]
@@ -492,7 +479,6 @@ def writeSHCIConfFile( SHCI, nelec, Restart ):
             occ_up.append(SHCI.orbsym[i_up])
         for i_dn in range(nelec[1]):
             occ_dn.append(SHCI.orbsym[i_dn])
-        print('occ_up',occ_up)
     
         irrep_map = dmrg_sym.IRREP_MAP[SHCI.groupname]
         irrep_occs_up = [0]*len(irrep_map)
@@ -500,7 +486,6 @@ def writeSHCIConfFile( SHCI, nelec, Restart ):
         for i in range(len(irrep_map)):
             irrep_occs_up[irrep_map[i]-1] = occ_up.count(i)
             irrep_occs_dn[irrep_map[i]-1] = occ_dn.count(i)
-        print('irrep_occs_up',irrep_occs_up, irrep_occs_dn)
     
         input_vars['chem']['irreps'] = range(1,len(irrep_map)+1)
         input_vars['chem']['irrep_occs_up'] = irrep_occs_up
@@ -628,7 +613,6 @@ def DinfhtoD2h(SHCI, norb, nelec):
     return nRows, rowIndex, rowCoeffs
 
 def writeIntegralFile(SHCI, h1eff, eri_cas, norb, nelec, ecore=0):
-    print('writeIntegralFile')
     if isinstance(nelec, (int, numpy.integer)):
         neleca = nelec//2 + nelec%2
         nelecb = nelec - neleca
@@ -691,11 +675,8 @@ def writeIntegralFile(SHCI, h1eff, eri_cas, norb, nelec, ecore=0):
        # these lines call the fortran program
        check_call(SHCI.Lz_relabel +' '+ integralFile, shell = True)
 
-       print('checking orbital symmetries for Lz')
-       
 
 def executeSHCI(SHCI):
-    print('executeSHCI')
     outFile = os.path.join(SHCI.runtimeDir, SHCI.outputFile)
     try:
         cmd = ' '.join((SHCI.mpiprefix, SHCI.executable))
@@ -710,7 +691,6 @@ def readEnergy(SHCI):
     with open('result.json') as result_file:
 	result = json.load(result_file)
     e_var = min(result['energy_var'].values())
-    print('readEnergy',e_var)
     return e_var
 
 def SHCISCF(mf, norb, nelec, maxM=1000, tol=1.e-8, *args, **kwargs):
