@@ -1,3 +1,0 @@
-repository='https://github.com/dftlibs/xcfun.git'
-module=''
-tag=''

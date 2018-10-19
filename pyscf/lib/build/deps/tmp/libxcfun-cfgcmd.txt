@@ -1,1 +1,0 @@
-cmd='/usr/bin/cmake;-DCMAKE_BUILD_TYPE=RELEASE;-DBUILD_SHARED_LIBS=1;-DXC_MAX_ORDER=3;-DENABLE_TESTALL=0;-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>;-DENABLE_FORTRAN_INTERFACE=OFF;-GUnix Makefiles;/home/yuanyao/pyscf_my/pyscf/lib/build/deps/src/libxcfun'
