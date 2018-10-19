@@ -251,24 +251,40 @@ class SHCI(pyscf.lib.StreamObject):
                                         delimiter=',', skiprows=1, unpack=True)
         twopdm = numpy.zeros((norb,norb,norb,norb))
         twopdm[i,j,k,l] = twopdm[j,i,l,k] = val
-        # convert rdm2 to the pyscf convention
-        twopdm = twopdm.transpose(0,3,1,2)
         
 	print('finished reading r2RDM')
 
         if (self.groupname == 'Dooh' or self.groupname == 'Coov') and self.useExtraSymm:
-           nRows, rowIndex, rowCoeffs = DinfhtoD2h(self, norb, nelec)
-           twopdmcopy = 1.*twopdm
-           twopdm = 0.*twopdm
-           print('calling transformRDMDinfh ')
-           transformRDMDinfh(norb, numpy.ascontiguousarray(nRows, numpy.int32),
-                             numpy.ascontiguousarray(rowIndex, numpy.int32),
-                             numpy.ascontiguousarray(rowCoeffs, numpy.float64),
-                             numpy.ascontiguousarray(twopdmcopy, numpy.float64),
-                             numpy.ascontiguousarray(twopdm, numpy.float64))
-           twopdmcopy = None
+            # to use transformRDMDinfh routine, switch to Dice convention first
+            twopdm = numpy.transpose(twopdm, (0,2,1,3))
+
+            nRows, rowIndex, rowCoeffs = DinfhtoD2h(self, norb, nelec)
+            twopdmcopy = 1.*twopdm
+            twopdm = 0.*twopdm
+
+            print('twopdmcopy')
+            print(numpy.ascontiguousarray(twopdmcopy, numpy.float64))
+            print('twopdm')
+            print(numpy.ascontiguousarray(twopdm, numpy.float64))
+
+            print('calling transformRDMDinfh ')
+
+            twopdmcopy = numpy.ascontiguousarray(twopdmcopy, numpy.float64)
+            twopdm = numpy.ascontiguousarray(twopdm, numpy.float64)
+            transformRDMDinfh(norb, numpy.ascontiguousarray(nRows, numpy.int32),
+                              numpy.ascontiguousarray(rowIndex, numpy.int32),
+                              numpy.ascontiguousarray(rowCoeffs, numpy.float64),
+                              twopdmcopy,
+                              twopdm)
+            print('twopdm after c routien', twopdm)
+            twopdmcopy = None
 
 
+            # Now convert 2rdm indices to pyscf convention
+            twopdm = twopdm.transpose(0,3,2,1)
+        else:
+            # convert 2rdm indices to pyscf convention
+            twopdm = twopdm.transpose(0,3,1,2)
 
         onepdm = numpy.einsum('ikjj->ki', twopdm)
         onepdm /= (nelectrons-1)
