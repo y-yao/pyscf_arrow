@@ -205,6 +205,7 @@ class SHCI(pyscf.lib.StreamObject):
         self.useExtraSymm = False
         self.initialStates = None
         self.extraline = ""
+        self.RDMformat = 'txt'
 
     @property
     def threads(self):
@@ -242,20 +243,23 @@ class SHCI(pyscf.lib.StreamObject):
             nelectrons = nelec[0]+nelec[1]
 
         twopdm = numpy.zeros( (norb, norb, norb, norb) )
-#        file2pdm = "%s/spatialRDM.%d.%d.txt"%(self.prefix,state, state)
-        #file2pdm = "spatialRDM.txt"
-        #file2pdm = file2pdm.encode()  # .encode for python3 compatibility
-        #r2RDM( twopdm, norb, file2pdm )
-        dm_file = os.path.join(self.runtimeDir, '2rdm.csv')
-        i, j, k, l, val = numpy.loadtxt(dm_file, dtype = numpy.dtype('i,i,i,i,d'),
-                                        delimiter=',', skiprows=1, unpack=True)
-        twopdm = numpy.zeros((norb,norb,norb,norb))
-        twopdm[i,j,k,l] = twopdm[j,i,l,k] = val
         
-        if (self.groupname == 'Dooh' or self.groupname == 'Coov') and self.useExtraSymm:
-            # to use transformRDMDinfh routine, switch to Dice convention first
-            twopdm = numpy.transpose(twopdm, (0,2,1,3))
+        if self.RDMformat != 'csv':
+            # use .txt format
+            #file2pdm = "%s/spatialRDM.%d.%d.txt"%(self.prefix,state, state)
+            file2pdm = "spatialRDM.txt"
+            file2pdm = file2pdm.encode()  # .encode for python3 compatibility
+            r2RDM( twopdm, norb, file2pdm )
+        else:
+            # use .csv format
+            dm_file = os.path.join(self.runtimeDir, '2rdm.csv')
+            i, j, k, l, val = numpy.loadtxt(dm_file, dtype = numpy.dtype('i,i,i,i,d'),
+                                            delimiter=',', skiprows=1, unpack=True)
+            twopdm[i,j,k,l] = twopdm[j,i,l,k] = val
+     
+            twopdm = numpy.transpose(twopdm, (0,3,1,2))
 
+        if (self.groupname == 'Dooh' or self.groupname == 'Coov') and self.useExtraSymm:
             nRows, rowIndex, rowCoeffs = DinfhtoD2h(self, norb, nelec)
             twopdmcopy = 1.*twopdm
             twopdm = 0.*twopdm
@@ -269,44 +273,9 @@ class SHCI(pyscf.lib.StreamObject):
                               twopdm)
             twopdmcopy = None
 
-            # Now convert 2rdm indices to pyscf convention
-            twopdm = twopdm.transpose(0,3,2,1)
-        else:
-            # convert 2rdm indices to pyscf convention
-            twopdm = twopdm.transpose(0,3,1,2)
-
         onepdm = numpy.einsum('ikjj->ki', twopdm)
         onepdm /= (nelectrons-1)
         return onepdm, twopdm
-
-    def trans_rdm1(self, statebra, stateket, norb, nelec, link_index=None, **kwargs):
-        return self.trans_rdm12(statebra, stateket, norb, nelec, link_index, **kwargs)[0]
-
-    def trans_rdm12(self, statebra, stateket, norb, nelec, link_index=None, **kwargs):
-        nelectrons = 0
-        if isinstance(nelec, (int, numpy.integer)):
-            nelectrons = nelec
-        else:
-            nelectrons = nelec[0]+nelec[1]
-
-        writeSHCIConfFile(self, nelec, True)
-        executeSHCI(self)
-
-        twopdm = numpy.zeros( (norb, norb, norb, norb) )
-        file2pdm = "spatialRDM.%d.%d.txt" % ( root, root )
-        r2RDM( twopdm, norb, file2pdm )
-
-        onepdm = numpy.einsum('ikjj->ki', twopdm)
-        onepdm /= (nelectrons-1)
-        return onepdm, twopdm
-
-
-    def clearSchedule(self):
-        self.scheduleSweeps = []
-        self.scheduleMaxMs = []
-        self.scheduleTols = []
-        self.scheduleNoises = []
-
 
     def kernel(self, h1e, eri, norb, nelec, fciRestart=None, ecore=0, **kwargs):
         if self.nroots == 1:
@@ -457,9 +426,11 @@ def writeSHCIConfFile( SHCI, nelec, Restart ):
         input_vars['eps_vars_schedule'] = [SHCI.sweep_epsilon[-1]]
     
     input_vars['var_only'] = True
-    
-    input_vars['get_2rdm_csv'] = True
-    
+
+    if SHCI.RDMformat != 'csv':    
+        input_vars['2rdm'] = True
+    else:
+        input_vars['get_2rdm_csv'] = True
 
     # Note: For Arrow, infinite groups are used only when useExtraSymm is true
     if SHCI.groupname == 'Coov' and not SHCI.useExtraSymm:
