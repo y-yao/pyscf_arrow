@@ -20,8 +20,9 @@ integer, allocatable :: max_nviolated_orbital_symmetry(:)
 character*2048 string
 character*11 string1
 character*7 string2
-real*8 integral
-real*8, parameter :: eps=1e-6
+real*8 integral, max_integral_violation, max_integral_violation_prev
+!real*8, parameter :: eps=1e-6
+real*8, parameter :: eps=1e-5
 
 step=1
 num_switch_tot=0
@@ -36,7 +37,7 @@ do iter=1,max_iter
     
     read(5,'(a11)',advance='no') string1
     if(iter==1) write(6,*) string1
-    if(string1.ne.'&FCI NORBS=') stop '1st line of FCIDUMP does not begin with &FCI NORBS='
+    if(string1.ne.'&FCI NORBS=' .and. string1.ne.' &FCI NORB=' .and. string1.ne.'&FCI NORB= ') stop '1st line of FCIDUMP does not begin with "&FCI NORBS=" or " &FCI NORB=" or "&FCI NORB= "'
     read(5,*) norb
     if(iter==1) write(6,'(''norb='',i5)') norb
     read(5,'(a7)',advance='no') string2
@@ -73,6 +74,7 @@ do iter=1,max_iter
   num_switch=0
   nviolated(1:norb)=0
   num_1body=0
+  max_integral_violation=0
   do ! Read the integral values and indices of orbs until end of FCIDUMP
     read(5,*,end=98) integral, ind(1:4)
     if(ind(3).eq.0 .and. ind(4).eq.0) then !   1-body integrals
@@ -114,9 +116,20 @@ do iter=1,max_iter
       endif
     else
 !     2-body integrals
+      if(lz(ind(1))+lz(ind(3)).ne.lz(ind(2))+lz(ind(4)) .and. abs(integral).gt.eps) then
+        max_integral_violation=max(max_integral_violation,abs(integral))
+!       write(6,'(''max integ violation for'',4i4,'' orbital_symmetry='',4i4,'' lz='',4i4,'' integral='',f16.12)') ind, (orbital_symmetry(ind(i)),i=1,4), (lz(ind(i)),i=1,4), integral
+      endif
       if(step==3) then
-        if(lz(ind(1))+lz(ind(3)).ne.lz(ind(2))+lz(ind(4)) .and. abs(integral).gt.eps) then
-          write(6,'(''angular momentum not conserved for'',4i4,'' orbital_symmetry='',4i4,'' lz='',4i4,'' integral='',f16.12)') ind, (orbital_symmetry(ind(i)),i=1,4), (lz(ind(i)),i=1,4), integral
+!       if(lz(ind(1))+lz(ind(3)).ne.lz(ind(2))+lz(ind(4)) .and. abs(integral).gt.eps) then
+        if(lz(ind(1))+lz(ind(3)).ne.lz(ind(2))+lz(ind(4)) .and. abs(integral).gt.max(eps,0.9*max_integral_violation_prev)) then
+          write(6,'(''angular momentum not conserved for'',4i4,'' orbital_symmetry='',4i4,'' lz='',4i4,'' integral='',2f16.12)') ind, (orbital_symmetry(ind(i)),i=1,4), (lz(ind(i)),i=1,4), integral
+          if(orbital_symmetry(ind(2))==-orbital_symmetry(ind(1)) .and. orbital_symmetry(ind(3))==orbital_symmetry(ind(1)) .and. orbital_symmetry(ind(4))==-orbital_symmetry(ind(1))) then
+            write(6,'(/,''There is no way to fix this'')')
+            num_switch=999
+            num_switch_tot=999
+            goto 99
+          endif
           loc_max=maxloc(abs(ind),1)
           ind_max=ind(loc_max)
           do i=1,norb
@@ -133,6 +146,14 @@ do iter=1,max_iter
   enddo ! read integrals
 
   98 continue 
+
+  write(6,'(/,''Max 2-body integral violation='',f12.8,/)') max_integral_violation, max_integral_violation_prev
+  if(step.lt.3) then
+    max_integral_violation_prev=max_integral_violation
+  else
+    max_integral_violation_prev=min(max_integral_violation_prev,max_integral_violation)
+  endif
+
   if(step==2) write(6,'(/,''num_switch2='',i5)') num_switch
   if(step==3) write(6,'(/,''num_switch3='',i9)') num_switch
   if(num_switch.ne.0 .and. step==2) then
@@ -147,7 +168,7 @@ do iter=1,max_iter
     step=3
   endif 
   if(iter==6 .and. num_switch.ne.0) then
-    write(6,'(''Cannot make the symmetry labels satisfy symmetry.  Pyscf probably broke symmetry. Check if there is a better starting state.'')')
+    write(6,'(''Cannot make the symmetry labels satisfy symmetry.  Molpro/Pyscf probably broke symmetry. Check if there is a better starting state.'')')
     exit
   endif 
   
@@ -217,6 +238,7 @@ do iter=1,max_iter
 
 enddo ! iter
 
+99 continue
 write(6,*)
 if(num_switch_tot==0) then
   write(6,'(''original FCIDUMP conserved angular momentum'')')
