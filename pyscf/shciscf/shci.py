@@ -144,7 +144,6 @@ class SHCI(pyscf.lib.StreamObject):
             self.verbose = mol.verbose
         self.outputlevel = 2
 
-        self.pyscf_home = settings.PYSCF_HOME
         self.executable = settings.SHCIEXE
         self.Lz_relabel = settings.LZ_RELABEL
         self.mpiprefix = settings.MPIPREFIX
@@ -645,7 +644,7 @@ def writeIntegralFile(SHCI, h1eff, eri_cas, norb, nelec, ecore=0):
 #           check_call('python checkLz_fcidump.py FCIDUMP', shell = True) 
 
        # these lines call the fortran program
-       check_call(SHCI.Lz_relabel + ' ' + integralFile + ' ' + SHCI.pyscf_home, shell = True)
+       check_call(SHCI.Lz_relabel +' '+ integralFile, shell = True)
 
 
 def executeSHCI(SHCI):
