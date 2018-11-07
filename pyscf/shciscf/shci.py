@@ -646,7 +646,20 @@ def writeIntegralFile(SHCI, h1eff, eri_cas, norb, nelec, ecore=0):
 
        # these lines call the fortran program
        check_call(SHCI.Lz_relabel + ' ' + integralFile + ' ' + SHCI.pyscf_home, shell = True)
+       orbsym = getorbsymfromFCIDUMP(norb)
 
+def getorbsymfromFCIDUMP(norb):
+    import re
+    orbsym_found = False
+    with open('FCIDUMP','r') as IntegralFile:
+        for line in IntegralFile:
+            for match in re.finditer(re.compile("(?<=^ORBSYM=)(.+)(?=\n)"), line):
+                orbsym = match.group(0).split(',')
+                orbsym = numpy.asarray([int(sym) for sym in orbsym[:norb]], dtype=numpy.int32)
+                orbsym_found = True
+            if orbsym_found:
+                break
+    return orbsym
 
 def executeSHCI(SHCI):
     outFile = os.path.join(SHCI.runtimeDir, SHCI.outputFile)
