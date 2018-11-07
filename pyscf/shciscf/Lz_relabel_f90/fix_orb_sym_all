@@ -2,7 +2,7 @@ for file in $*
 do
 echo '' >> fix_orb_sym.out.all
 echo $file >> fix_orb_sym.out.all
-~yuanyao/pyscf_my/pyscf/shciscf/Lz_relabel_f90/fix_orb_sym < $file > fix_orb_sym.out
+./fix_orb_sym < $file > fix_orb_sym.out
 grep 'ORBSYM=' fix_orb_sym.out > ORBSYM
 grep 'num_switch.*=' fix_orb_sym.out >> ORBSYM
 ex $file <<_end
