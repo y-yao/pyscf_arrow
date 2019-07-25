@@ -1,8 +1,10 @@
+for file in $*
+do
 echo '' >> fix_orb_sym.out.all
-echo $1 >> fix_orb_sym.out.all
-executable="pyscf/shciscf/Lz_relabel_f90/fix_orb_sym"
-cmd="$2pyscf/shciscf/Lz_relabel_f90/fix_orb_sym < $1 > fix_orb_sym.out"
-eval $cmd
+echo $file >> fix_orb_sym.out.all
+#~yuanyao/pyscf_my/pyscf/shciscf/Lz_relabel_f90/fix_orb_sym < $file > fix_orb_sym.out
+fix=`echo $0 | sed -e 's/_all//'`
+$fix < $file > fix_orb_sym.out
 grep 'ORBSYM=' fix_orb_sym.out > ORBSYM
 grep 'num_switch.*=' fix_orb_sym.out >> ORBSYM
 ex $file <<_end
@@ -15,3 +17,4 @@ g/ORBSYM_old=/d
 wq
 _end
 cat fix_orb_sym.out >>fix_orb_sym.out.all
+done

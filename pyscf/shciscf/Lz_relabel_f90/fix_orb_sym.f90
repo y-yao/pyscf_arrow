@@ -15,7 +15,7 @@
 ! The bottom line is that this code always works except when pyscf breaks symmetry in which case it is impossible to fix the violations.
 
 implicit none
-integer orbital_symmetry(0:2000), lz(0:2000), nviolated(0:2000), norb, ind(4), loc_max, ind_max, num_1body, num_switch, num_switch_tot, orbital_symmetry_max, max_iter, iter, step, i, j, n
+integer orbital_symmetry(0:2000), lz(0:2000), nviolated(0:2000), norb, ind(4), orb_sym(4), orb_sym_max, loc_max, ind_max, num_1body, num_switch, num_switch_tot, orbital_symmetry_max, max_iter, iter, step, i, j, n
 integer, allocatable :: max_nviolated_orbital_symmetry(:)
 character*2048 string
 character*11 string1
@@ -74,7 +74,7 @@ do iter=1,max_iter
   num_switch=0
   nviolated(1:norb)=0
   num_1body=0
-  max_integral_violation=0
+  if(iter==1 .or. step==3) max_integral_violation=0
   do ! Read the integral values and indices of orbs until end of FCIDUMP
     read(5,*,end=98) integral, ind(1:4)
     if(ind(3).eq.0 .and. ind(4).eq.0) then !   1-body integrals
@@ -130,11 +130,18 @@ do iter=1,max_iter
             num_switch_tot=999
             goto 99
           endif
-          loc_max=maxloc(abs(ind),1)
-          ind_max=ind(loc_max)
+!         loc_max=maxloc(abs(ind),1)
+!         loc_max=maxloc(abs(ind),1)
+!         ind_max=ind(loc_max)
+!         write(6,'(''loc_max, ind_max, orbital_symmetry(ind_max)'',9i5)') loc_max, ind_max, orbital_symmetry(ind_max)
+!         do i=1,norb
+!           if(abs(orbital_symmetry(i))==abs(orbital_symmetry(ind_max))) then
+          orb_sym(1:4)=orbital_symmetry(ind(1:4))
+          orb_sym_max=maxval(abs(orb_sym))
+          write(6,'(''orb_sym_max='',9i5)') orb_sym_max
           do i=1,norb
-            if(abs(orbital_symmetry(i))==abs(orbital_symmetry(ind_max))) then
-!             write(6,'(''switching sym of orbital='',i4,'' with sym'',9i4)') i, orbital_symmetry(i)
+            if(abs(orbital_symmetry(i))==abs(orb_sym_max)) then
+              write(6,'(''switching sym of orbital='',i4,'' with sym'',9i4)') i, orbital_symmetry(i)
               num_switch=num_switch+1
               orbital_symmetry(i)=-orbital_symmetry(i)
               lz(i)=-lz(i)
@@ -147,7 +154,12 @@ do iter=1,max_iter
 
   98 continue 
 
-  write(6,'(/,''Max 2-body integral violation='',f12.8,/)') max_integral_violation, max_integral_violation_prev
+  if(iter==1) then
+    write(6,'(/,''Max 2-body integral_violation='',2f12.8,/)') max_integral_violation
+  else
+    write(6,'(/,''Max 2-body integral_violation, integral_violation_prev='',2f12.8,/)') max_integral_violation, max_integral_violation_prev
+  endif
+
   if(step.lt.3) then
     max_integral_violation_prev=max_integral_violation
   else
@@ -162,7 +174,7 @@ do iter=1,max_iter
     write(6,'(''sym'',1000i6)') (orbital_symmetry(i),i=1,norb)
     write(6,'(''lz '',1000i6)') (lz(i),i=1,norb)
   endif
-  if(step==3 .and. num_switch==0) exit
+  if(step==3 .and. num_switch==0 .and. max_integral_violation.lt.1.e-12) exit
   if(step==2 .and. num_switch==0) then
     write(6,'(''1-electron integrals can be made to conserve angular momentum'')')
     step=3
@@ -186,7 +198,7 @@ do iter=1,max_iter
         endif
       enddo
     enddo
-    write(6,'(''max_nviolated_orbital_symmetry='',100i5)') max_nviolated_orbital_symmetry(1:orbital_symmetry_max)
+    write(6,'(/,''max_nviolated_orbital_symmetry='',100i5)') max_nviolated_orbital_symmetry(1:orbital_symmetry_max)
     
     ! Switch orbital symmetries for those orbs that have the maximum number of violations for each abs(orbital_symmetry)
     num_switch=0
